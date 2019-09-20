@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gm.mapper.UserMapper">
+
+	<sql id="utable">sys_user u</sql>
+	<sql id="rtable">sys_role r</sql>
+	<sql id="ptable">sys_permission p</sql>
+	<sql id="urtable">user_role ur</sql>
+	<sql id="rptable">role_permission rp</sql>
+	
+	<sql id="field">u.id,u.user_id,u.username,u.password,u.salt,u.name,u.email,u.phone,
+			u.sex,u.age,u.status,u.create_time,u.update_time,u.last_login_time</sql>
+
+	<!-- 添加用户 -->
+	<insert id="addUser" parameterType="user">
+		INSERT INTO <include refid="utable"/> 
+		(user_id,username,password,salt,name,email,phone,sex,age,create_time)
+		VALUES
+		(#{userId},#{userName},#{passWord},#{salt},#{name},#{email},#{phone},#{sex},#{age},#{createTime})
+	</insert>
+	<!-- 根据用户名查询用户 -->
+	<select id="getUserByUsername" parameterType="string" resultType="user">
+		SELECT <include refid="field"/> FROM <include refid="utable"/>
+		WHERE username = #{username}
+	</select>
+	<!-- 根据用户名查询该用户的所有角色 -->
+	<select id="findRolesByUsername" parameterType="string" resultType="string">
+		SELECT r.name
+		FROM
+			<include refid="utable"/>, <include refid="rtable"/>, <include refid="urtable"/>
+		WHERE
+			u.user_id = ur.user_id 
+			AND r.role_id = ur.role_id
+			AND u.username = #{username}
+	</select>
+	<!-- 根据用户名查询该用户的所有权限 -->
+	<select id="findPermissionsByUsername" parameterType="string" resultType="string">
+		SELECT p.name
+		FROM
+			<include refid="utable"/> u, <include refid="rtable"/> r, <include refid="urtable"/> ur,
+			<include refid="ptable"/>, <include refid="rptable"/>
+		WHERE
+			u.user_id = ur.user_id 
+			AND r.role_id = ur.role_id
+			AND r.role_id = rp.role_id
+			AND p.permission_id = rp.permission_id
+			AND u.username = #{username}
+	</select>
+	<!-- 设置最后登录时间 -->
+	<update id="setLastLoginTime" parameterType="user">
+		update <include refid="utable"/> set last_login_time = #{lastLoginTime} where user_id = #{userId}
+	</update>
+
+</mapper>
